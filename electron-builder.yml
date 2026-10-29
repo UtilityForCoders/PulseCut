@@ -1,0 +1,33 @@
+appId: com.pulsecut.desktop
+productName: PulseCut
+asar: true
+directories:
+  output: release
+files:
+  - desktop/**/*
+  - public/**/*
+  - server.js
+  - package.json
+  - '!node_modules/ffmpeg-static/ffmpeg.exe'
+  - '!node_modules/ffprobe-static/bin/**/*'
+extraResources:
+  - from: node_modules/ffmpeg-static/ffmpeg.exe
+    to: bin/ffmpeg.exe
+  - from: node_modules/ffprobe-static/bin/win32/x64/ffprobe.exe
+    to: bin/ffprobe.exe
+  - from: node_modules/ffmpeg-static/ffmpeg.exe.LICENSE
+    to: licenses/FFmpeg-LICENSE.txt
+  - from: node_modules/ffmpeg-static/ffmpeg.exe.README
+    to: licenses/FFmpeg-README.txt
+  - from: THIRD-PARTY-NOTICES.md
+    to: licenses/THIRD-PARTY-NOTICES.md
+  - from: README.md
+    to: README.md
+win:
+  target:
+    - target: portable
+      arch: [x64]
+  signAndEditExecutable: false
+portable:
+  artifactName: PulseCut-${version}-portable.exe
+  requestExecutionLevel: user

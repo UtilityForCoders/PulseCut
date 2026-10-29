@@ -1,0 +1,27 @@
+{
+  "name": "pulsecut",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "desktop/main.js",
+  "author": "PulseCut",
+  "description": "Editor local rápido de video y audio",
+  "scripts": {
+    "start": "electron .",
+    "start:web": "node server.js",
+    "build:win": "electron-builder --win portable --x64",
+    "build:dir": "electron-builder --win --dir --x64",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "26.18.0"
+  }
+}
