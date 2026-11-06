@@ -1,5 +1,7 @@
 # PulseCut 0.1.0
 
+La rama `native/wpf` contiene el prototipo de escritorio en C# y WPF. Consulta [la guía de la edición nativa](native/README.md) para compilar y ejecutar su primer binario. El resto de esta página describe la release 0.1.0.
+
 Aplicación de escritorio para Windows que permite importar video y audio, recortar un tramo, cambiar su velocidad y exportar el resultado. El procesamiento se realiza en el equipo con FFmpeg.
 
 ## Ejecutar el programa
