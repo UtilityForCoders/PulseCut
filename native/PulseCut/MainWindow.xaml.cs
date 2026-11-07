@@ -2,6 +2,9 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
@@ -9,6 +12,7 @@ namespace PulseCut;
 
 public partial class MainWindow : Window
 {
+    private const double TimelineInset = 16;
     private readonly DispatcherTimer playbackTimer;
     private MediaFile? source;
     private CancellationTokenSource? operation;
@@ -16,6 +20,7 @@ public partial class MainWindow : Window
     private bool playing;
     private bool updatingPosition;
     private bool closing;
+    private double trimDragOffset;
 
     public MainWindow()
     {
@@ -67,6 +72,11 @@ public partial class MainWindow : Window
             FormatBox.ItemsSource = new[] { "mp4", "mp3", "wav" }.Where(media.Supports).ToArray();
             FormatBox.SelectedIndex = 0;
             PositionSlider.Maximum = media.Duration;
+            TickQuarter.Text = DisplayTime(media.Duration / 4, precise: false);
+            TickHalf.Text = DisplayTime(media.Duration / 2, precise: false);
+            TickThreeQuarter.Text = DisplayTime(media.Duration * 3 / 4, precise: false);
+            TickEnd.Text = DisplayTime(media.Duration, precise: false);
+            ShowPosition(0);
             PreviewMessage.Text = "Preparando vista previa…";
             PreviewMessage.Visibility = Visibility.Visible;
             StatusLabel.Text = "Archivo listo para editar";
@@ -144,21 +154,24 @@ public partial class MainWindow : Window
         if (!previewReady || updatingPosition)
             return;
         Preview.Position = TimeSpan.FromSeconds(e.NewValue);
-        PositionLabel.Text = DisplayTime(e.NewValue);
+        ShowPositionLabel(e.NewValue);
     }
 
     private void ShowPosition(double position)
     {
         updatingPosition = true;
         PositionSlider.Value = position;
-        PositionLabel.Text = DisplayTime(position);
+        ShowPositionLabel(position);
         updatingPosition = false;
     }
+
+    private void ShowPositionLabel(double position) =>
+        PositionLabel.Text = $"{DisplayTime(position)} / {DisplayTime(source?.Duration ?? 0)}";
 
     private void OnMarkStart(object sender, RoutedEventArgs e) => MarkPosition(StartBox);
     private void OnMarkEnd(object sender, RoutedEventArgs e) => MarkPosition(EndBox);
 
-    private void MarkPosition(System.Windows.Controls.TextBox field)
+    private void MarkPosition(TextBox field)
     {
         if (previewReady)
             field.Text = DisplayNumber(PositionSlider.Value);
@@ -173,9 +186,88 @@ public partial class MainWindow : Window
         if (DurationLabel is null || ExportButton is null)
             return;
         var clip = ReadClip();
-        DurationLabel.Text = clip is null ? "Duración final: —" : $"Duración final: {DisplayTime(clip.Duration)}";
+        DurationLabel.Text = clip is null ? "—" : DisplayTime(clip.Duration);
+        ExportButton.Content = FormatBox?.SelectedItem is string format
+            ? $"_Exportar {format.ToUpperInvariant()}"
+            : "_Exportar clip";
         ExportButton.IsEnabled = operation is null && clip is not null;
+        UpdateTrimTrack();
     }
+
+    private void OnTimelineSizeChanged(object sender, SizeChangedEventArgs e) => UpdateTrimTrack();
+
+    private void UpdateTrimTrack()
+    {
+        if (source is null || StartHandle is null || EndHandle is null)
+            return;
+        var duration = source.Duration;
+        var width = Math.Max(0, TimelineSurface.ActualWidth - 2 * TimelineInset);
+        var start = ReadBoundary(StartBox, 0, duration);
+        var end = ReadBoundary(EndBox, duration, duration);
+        var startX = TimelineInset + width * start / duration;
+        var endX = TimelineInset + width * end / duration;
+
+        Canvas.SetLeft(StartHandle, startX - StartHandle.Width);
+        Canvas.SetLeft(EndHandle, endX);
+        Canvas.SetLeft(TrimSelection, startX);
+        TrimSelection.Width = Math.Max(0, endX - startX);
+        TrimSelection.Visibility = start < end ? Visibility.Visible : Visibility.Collapsed;
+        StartHandle.Visibility = EndHandle.Visibility = Visibility.Visible;
+        StartHandle.IsEnabled = EndHandle.IsEnabled = operation is null;
+        TrimSelection.Opacity = operation is null ? 1 : 0.45;
+    }
+
+    private void OnTrimDragStarted(object sender, DragStartedEventArgs e)
+    {
+        var handle = (Thumb)sender;
+        handle.Focus();
+        var boundary = Canvas.GetLeft(handle) + (handle == StartHandle ? handle.Width : 0);
+        trimDragOffset = Mouse.GetPosition(TimelineSurface).X - boundary;
+    }
+
+    private void OnTrimDrag(object sender, DragDeltaEventArgs e)
+    {
+        var width = TimelineSurface.ActualWidth - 2 * TimelineInset;
+        if (source is null || width <= 0)
+            return;
+        var relativeX = Mouse.GetPosition(TimelineSurface).X - trimDragOffset - TimelineInset;
+        SetTrimBoundary(sender == StartHandle, relativeX / width * source.Duration);
+    }
+
+    private void OnTrimKeyDown(object sender, KeyEventArgs e)
+    {
+        if (source is null || e.Key is not (Key.Left or Key.Right))
+            return;
+        var isStart = sender == StartHandle;
+        var current = ReadBoundary(isStart ? StartBox : EndBox, isStart ? 0 : source.Duration, source.Duration);
+        var step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 1.0 : 0.1;
+        SetTrimBoundary(isStart, current + (e.Key == Key.Right ? step : -step));
+        e.Handled = true;
+    }
+
+    private void SetTrimBoundary(bool isStart, double seconds)
+    {
+        if (source is null || operation is not null)
+            return;
+        var duration = source.Duration;
+        var gap = Math.Min(0.01, duration);
+        var position = Math.Round(seconds, 3);
+        if (isStart)
+        {
+            var end = ReadBoundary(EndBox, duration, duration);
+            StartBox.Text = DisplayNumber(Math.Clamp(position, 0, Math.Max(0, end - gap)));
+        }
+        else
+        {
+            var start = ReadBoundary(StartBox, 0, duration);
+            EndBox.Text = DisplayNumber(Math.Clamp(position, Math.Min(duration, start + gap), duration));
+        }
+    }
+
+    private static double ReadBoundary(TextBox field, double fallback, double duration) =>
+        TrySeconds(field.Text, out var seconds) && double.IsFinite(seconds) && seconds >= 0 && seconds <= duration
+            ? seconds
+            : fallback;
 
     private Clip? ReadClip()
     {
@@ -222,6 +314,7 @@ public partial class MainWindow : Window
         ExportProgress.Value = 0;
         ExportProgress.Visibility = exporting ? Visibility.Visible : Visibility.Collapsed;
         StatusLabel.Text = message;
+        UpdateTrimTrack();
     }
 
     private void EndOperation()
@@ -265,5 +358,10 @@ public partial class MainWindow : Window
         double.TryParse(text.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out seconds);
 
     private static string DisplayNumber(double value) => value.ToString("R", CultureInfo.CurrentCulture);
-    private static string DisplayTime(double value) => TimeSpan.FromSeconds(value).ToString(@"hh\:mm\:ss\.ff");
+    private static string DisplayTime(double value, bool precise = true)
+    {
+        var time = TimeSpan.FromSeconds(value);
+        var text = $"{(long)time.TotalMinutes:00}:{time.Seconds:00}";
+        return precise ? $"{text}.{time.Milliseconds / 10:00}" : text;
+    }
 }
