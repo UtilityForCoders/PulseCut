@@ -35,6 +35,18 @@ public partial class MainWindow : Window
         };
     }
 
+    private void OnMinimizeWindow(object sender, RoutedEventArgs e) => SystemCommands.MinimizeWindow(this);
+
+    private void OnToggleWindowState(object sender, RoutedEventArgs e)
+    {
+        if (WindowState == WindowState.Maximized)
+            SystemCommands.RestoreWindow(this);
+        else
+            SystemCommands.MaximizeWindow(this);
+    }
+
+    private void OnCloseWindow(object sender, RoutedEventArgs e) => SystemCommands.CloseWindow(this);
+
     private async void OnOpen(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog
@@ -67,6 +79,7 @@ public partial class MainWindow : Window
             ResetPreview();
             source = media;
             FileTitle.Text = Path.GetFileName(media.Path);
+            LocalFileLabel.Visibility = Visibility.Visible;
             StartBox.Text = "0";
             EndBox.Text = DisplayNumber(media.Duration);
             FormatBox.ItemsSource = new[] { "mp4", "mp3", "wav" }
