@@ -5,7 +5,11 @@
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.2.0-alpha.2</Version>
+    <Version>0.2.0-alpha.3</Version>
     <Product>PulseCut</Product>
+    <ApplicationIcon>Assets/PulseCut.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets/PulseCut.ico" />
+  </ItemGroup>
 </Project>

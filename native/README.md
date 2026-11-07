@@ -1,4 +1,4 @@
-# PulseCut 0.2.0 alfa 2
+# PulseCut 0.2.0 alfa 3
 
 Aplicación de escritorio para Windows x64, hecha en C# y WPF. Abre `PulseCut.exe` desde la carpeta extraída. El ejecutable incluye el runtime de .NET. Conserva la carpeta `bin` junto al ejecutable.
 
@@ -18,7 +18,7 @@ La barra superior permite abrir archivos, minimizar, maximizar, restaurar y cerr
 Requiere el SDK de .NET 10 y dos ejecutables Windows x64 de FFmpeg y FFprobe. El script usa por defecto la carpeta de herramientas de la compilación 0.1.0 que ya existe en este equipo. Puedes indicar otra carpeta con `-MediaTools`.
 
 ```powershell
-.\native\publish.ps1 -MediaTools 'C:\ruta\a\bin' -Output (Join-Path (Get-Location) 'release/PulseCut-0.2.0-alpha.2-win-x64')
+.\native\publish.ps1 -MediaTools 'C:\ruta\a\bin' -Output (Join-Path (Get-Location) 'release/PulseCut-0.2.0-alpha.3-win-x64')
 ```
 
 La carpeta de salida contiene el ejecutable y las herramientas que necesita. La carpeta `native` contiene el código de esta edición.
