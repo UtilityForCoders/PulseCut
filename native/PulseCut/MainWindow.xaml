@@ -35,27 +35,47 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Border Background="#101215" CornerRadius="5" ClipToBounds="True">
+                    <Border Background="#08090B" CornerRadius="5" ClipToBounds="True">
                         <Grid>
                             <MediaElement x:Name="Preview" LoadedBehavior="Manual" UnloadedBehavior="Close" Stretch="Uniform"
                                           MediaOpened="OnMediaOpened" MediaEnded="OnMediaEnded" MediaFailed="OnMediaFailed"/>
                             <TextBlock x:Name="PreviewMessage" Text="Abre o arrastra un video o audio"
                                        VerticalAlignment="Center" HorizontalAlignment="Center"
                                        TextAlignment="Center" TextWrapping="Wrap" Margin="20" Foreground="{StaticResource Muted}"/>
+                            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" Padding="8,4"
+                                    CornerRadius="4" Background="#E0101115" IsHitTestVisible="False">
+                                <TextBlock Text="VISTA PREVIA" FontSize="11" FontWeight="SemiBold"/>
+                            </Border>
                         </Grid>
                     </Border>
-                    <DockPanel Grid.Row="1" Margin="0,8,0,0">
-                        <Button x:Name="PlayButton" Content="_Reproducir" IsEnabled="False" Click="OnPlay" Padding="10,5"/>
-                        <TextBlock Text="Vista previa" HorizontalAlignment="Right" Margin="10,0,2,0"
-                                   VerticalAlignment="Center" Foreground="{StaticResource Muted}" FontSize="12"/>
-                    </DockPanel>
+                    <Border Grid.Row="1" Margin="0,9,0,0" Padding="8,6" CornerRadius="5" Background="{StaticResource Hover}">
+                        <Grid>
+                            <StackPanel x:Name="MarkControls" Orientation="Horizontal" HorizontalAlignment="Left" IsEnabled="False">
+                                <Button Content="[ Inicio" Padding="8,5" FontSize="12" Click="OnMarkStart" ToolTip="Marcar inicio en la posición actual"/>
+                                <Button Content="Fin ]" Padding="8,5" FontSize="12" Margin="5,0,0,0" Click="OnMarkEnd" ToolTip="Marcar fin en la posición actual"/>
+                            </StackPanel>
+                            <Button x:Name="PlayButton" Content="_Reproducir" HorizontalAlignment="Center" IsEnabled="False" Click="OnPlay" Padding="14,5"/>
+                            <TextBlock x:Name="PreviewInfo" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                       Foreground="{StaticResource Muted}" FontSize="12"/>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
             <Border Grid.Column="2" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}"
                     BorderThickness="1" CornerRadius="8" Padding="16">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,12"/>
+                        <Button x:Name="ExportButton" Content="_Exportar clip" Style="{StaticResource Primary}"
+                                IsEnabled="False" Click="OnExport"/>
+                        <Button x:Name="CancelButton" Content="Cancelar" Margin="0,8,0,0" Visibility="Collapsed" Click="OnCancel"/>
+                        <ProgressBar x:Name="ExportProgress" Height="5" Margin="0,10,0,0" Maximum="100"
+                                     Foreground="{StaticResource Signal}" Visibility="Collapsed"/>
+                    </StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Text="Recorte y salida" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,14"/>
+                        <TextBlock Text="RECORTE Y SALIDA" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                        <Border Height="1" Background="{StaticResource Line}" Margin="0,0,0,15"/>
                         <StackPanel x:Name="EditControls" IsEnabled="False">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -66,37 +86,36 @@
                                 <StackPanel>
                                     <TextBlock Text="Inicio (s)" Margin="0,0,0,5" Foreground="{StaticResource Muted}"/>
                                     <TextBox x:Name="StartBox" Text="0" TextChanged="OnSettingsChanged" AutomationProperties.Name="Inicio en segundos"/>
-                                    <Button Content="Usar posición" Padding="4,5" FontSize="12" Margin="0,6,0,0" Click="OnMarkStart"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Fin (s)" Margin="0,0,0,5" Foreground="{StaticResource Muted}"/>
                                     <TextBox x:Name="EndBox" Text="0" TextChanged="OnSettingsChanged" AutomationProperties.Name="Fin en segundos"/>
-                                    <Button Content="Usar posición" Padding="4,5" FontSize="12" Margin="0,6,0,0" Click="OnMarkEnd"/>
                                 </StackPanel>
                             </Grid>
                             <TextBlock Text="Velocidad de salida" Margin="0,14,0,5" Foreground="{StaticResource Muted}"/>
                             <ComboBox x:Name="SpeedBox" SelectionChanged="OnSettingsChanged" ItemStringFormat="{}{0}×" AutomationProperties.Name="Velocidad de salida"/>
                             <TextBlock Text="Formato de salida" Margin="0,12,0,5" Foreground="{StaticResource Muted}"/>
                             <ComboBox x:Name="FormatBox" SelectionChanged="OnSettingsChanged" AutomationProperties.Name="Formato de salida"/>
-                            <DockPanel Margin="0,14,0,0">
+                            <TextBlock x:Name="CodecLabel" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,6,0,0"/>
+                            <Border Background="{StaticResource Window}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                    CornerRadius="5" Padding="9,8" Margin="0,14,0,0">
+                            <DockPanel>
                                 <TextBlock Text="Duración final" Foreground="{StaticResource Muted}"/>
-                                <TextBlock x:Name="DurationLabel" Text="—" HorizontalAlignment="Right" FontFamily="Consolas"/>
+                                <TextBlock x:Name="DurationLabel" Text="—" HorizontalAlignment="Right" FontFamily="Consolas"
+                                           Foreground="{StaticResource Signal}"/>
                             </DockPanel>
+                            </Border>
                         </StackPanel>
-                        <Button x:Name="ExportButton" Content="_Exportar clip" Style="{StaticResource Primary}" Margin="0,15,0,0"
-                                IsEnabled="False" Click="OnExport"/>
-                        <Button x:Name="CancelButton" Content="Cancelar" Margin="0,8,0,0" Visibility="Collapsed" Click="OnCancel"/>
-                        <ProgressBar x:Name="ExportProgress" Height="5" Margin="0,10,0,0" Maximum="100"
-                                     Foreground="{StaticResource Accent}" Visibility="Collapsed"/>
                     </StackPanel>
-                </ScrollViewer>
+                    </ScrollViewer>
+                </DockPanel>
             </Border>
         </Grid>
-        <Border Grid.Row="2" Margin="0,12,0,0" Padding="12,9,12,10" Background="{StaticResource Panel}"
+        <Border Grid.Row="2" Margin="0,12,0,0" Padding="12,9,12,12" Background="{StaticResource Panel}"
                 BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="8">
             <StackPanel>
                 <DockPanel Margin="0,0,0,5">
-                    <TextBlock Text="Línea de tiempo" FontWeight="SemiBold"/>
+                    <TextBlock Text="LÍNEA DE TIEMPO" FontSize="12" FontWeight="SemiBold"/>
                     <TextBlock x:Name="PositionLabel" Text="00:00.00 / 00:00.00" HorizontalAlignment="Right" FontFamily="Consolas"
                                Foreground="{StaticResource Muted}" FontSize="12"/>
                 </DockPanel>
@@ -113,7 +132,8 @@
                 <Grid Height="34" x:Name="TimelineSurface" SizeChanged="OnTimelineSizeChanged">
                     <Border Margin="16,2" CornerRadius="4" Background="{StaticResource Hover}"/>
                     <Canvas IsHitTestVisible="False">
-                        <Border x:Name="TrimSelection" Height="30" Canvas.Top="2" Background="#32C8F477" Visibility="Collapsed"/>
+                        <Border x:Name="TrimSelection" Height="30" Canvas.Top="2" Background="#38F5F6F8"
+                                BorderBrush="#91F5F6F8" BorderThickness="0,1" Visibility="Collapsed"/>
                     </Canvas>
                     <Slider x:Name="PositionSlider" IsEnabled="False" IsMoveToPointEnabled="True"
                             ValueChanged="OnPositionChanged" AutomationProperties.Name="Posición de reproducción">
@@ -131,7 +151,7 @@
                                         <Thumb Width="32" Cursor="SizeWE">
                                             <Thumb.Template>
                                                 <ControlTemplate TargetType="Thumb">
-                                                    <Grid Background="Transparent"><Border Width="2" Background="{StaticResource Ink}"/></Grid>
+                                                    <Grid Background="Transparent"><Border Width="2" Background="{StaticResource Signal}"/></Grid>
                                                 </ControlTemplate>
                                             </Thumb.Template>
                                         </Thumb>

@@ -69,7 +69,8 @@ public partial class MainWindow : Window
             FileTitle.Text = Path.GetFileName(media.Path);
             StartBox.Text = "0";
             EndBox.Text = DisplayNumber(media.Duration);
-            FormatBox.ItemsSource = new[] { "mp4", "mp3", "wav" }.Where(media.Supports).ToArray();
+            FormatBox.ItemsSource = new[] { "mp4", "mp3", "wav" }
+                .Where(media.Supports).Select(format => format.ToUpperInvariant()).ToArray();
             FormatBox.SelectedIndex = 0;
             PositionSlider.Maximum = media.Duration;
             TickQuarter.Text = DisplayTime(media.Duration / 4, precise: false);
@@ -94,6 +95,10 @@ public partial class MainWindow : Window
         previewReady = true;
         PlayButton.IsEnabled = true;
         PositionSlider.IsEnabled = true;
+        MarkControls.IsEnabled = operation is null;
+        PreviewInfo.Text = source?.VideoIndex is not null
+            ? $"{Preview.NaturalVideoWidth} × {Preview.NaturalVideoHeight}"
+            : "Audio";
         PreviewMessage.Text = "Vista previa de audio";
         PreviewMessage.Visibility = source?.VideoIndex is null ? Visibility.Visible : Visibility.Collapsed;
         ShowPosition(0);
@@ -125,6 +130,8 @@ public partial class MainWindow : Window
         PlayButton.Content = "_Reproducir";
         PlayButton.IsEnabled = false;
         PositionSlider.IsEnabled = false;
+        MarkControls.IsEnabled = false;
+        PreviewInfo.Text = "";
         ShowPosition(0);
     }
 
@@ -173,7 +180,7 @@ public partial class MainWindow : Window
 
     private void MarkPosition(TextBox field)
     {
-        if (previewReady)
+        if (previewReady && operation is null)
             field.Text = DisplayNumber(PositionSlider.Value);
         else
             StatusLabel.Text = "La posición requiere una vista previa compatible";
@@ -187,9 +194,15 @@ public partial class MainWindow : Window
             return;
         var clip = ReadClip();
         DurationLabel.Text = clip is null ? "—" : DisplayTime(clip.Duration);
-        ExportButton.Content = FormatBox?.SelectedItem is string format
-            ? $"_Exportar {format.ToUpperInvariant()}"
-            : "_Exportar clip";
+        var format = FormatBox.SelectedItem as string;
+        ExportButton.Content = format is null ? "_Exportar clip" : $"_Exportar {format}";
+        CodecLabel.Text = format switch
+        {
+            "MP4" => source?.AudioIndex is not null ? "H.264 · AAC" : "H.264",
+            "MP3" => "MP3 · 192 kb/s",
+            "WAV" => "PCM · 16 bits",
+            _ => ""
+        };
         ExportButton.IsEnabled = operation is null && clip is not null;
         UpdateTrimTrack();
     }
@@ -275,7 +288,7 @@ public partial class MainWindow : Window
             FormatBox.SelectedItem is not string format || !TrySeconds(StartBox.Text, out var start) ||
             !TrySeconds(EndBox.Text, out var end))
             return null;
-        var clip = new Clip(start, end, speed, format);
+        var clip = new Clip(start, end, speed, format.ToLowerInvariant());
         return clip.IsValid(source) ? clip : null;
     }
 
@@ -309,6 +322,7 @@ public partial class MainWindow : Window
         operation = new CancellationTokenSource();
         OpenButton.IsEnabled = false;
         EditControls.IsEnabled = false;
+        MarkControls.IsEnabled = false;
         ExportButton.IsEnabled = false;
         CancelButton.Visibility = Visibility.Visible;
         ExportProgress.Value = 0;
@@ -328,6 +342,7 @@ public partial class MainWindow : Window
         }
         OpenButton.IsEnabled = true;
         EditControls.IsEnabled = source is not null;
+        MarkControls.IsEnabled = previewReady;
         CancelButton.Visibility = Visibility.Collapsed;
         ExportProgress.Visibility = Visibility.Collapsed;
         UpdateSettings();
