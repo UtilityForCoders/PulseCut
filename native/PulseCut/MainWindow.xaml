@@ -58,8 +58,8 @@
                     Padding="11,5" VerticalAlignment="Center" shell:WindowChrome.IsHitTestVisibleInChrome="True"/>
             <TextBlock x:Name="LocalFileLabel" DockPanel.Dock="Right" Text="●  Archivo local" Visibility="Collapsed"
                        Foreground="{StaticResource Signal}" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"/>
-            <Image DockPanel.Dock="Left" Width="29" Height="29" Margin="14,0,0,0"
-                   Source="{Binding Icon, RelativeSource={RelativeSource AncestorType=Window}}"
+            <Image DockPanel.Dock="Left" Width="32" Height="32" Margin="14,0,0,0"
+                   Source="/Assets/PulseCutLogo.png" UseLayoutRounding="True"
                    RenderOptions.BitmapScalingMode="HighQuality"/>
             <TextBlock DockPanel.Dock="Left" Text="PulseCut" FontSize="19" FontWeight="SemiBold" Margin="9,0,0,0" VerticalAlignment="Center"/>
             <Border DockPanel.Dock="Left" Width="1" Height="20" Margin="14,0" Background="{StaticResource Line}"/>
