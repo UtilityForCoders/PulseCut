@@ -1,5 +1,7 @@
 # PulseCut 0.1.0
 
+La edición de escritorio en C# y WPF se desarrolla en `feature/editor-escritorio`. Consulta [la guía de la edición nativa](native/README.md) para compilarla y conocer el flujo de ramas. El resto de esta página describe la release 0.1.0.
+
 Aplicación de escritorio para Windows que permite importar video y audio, recortar un tramo, cambiar su velocidad y exportar el resultado. El procesamiento se realiza en el equipo con FFmpeg.
 
 ## Ejecutar el programa

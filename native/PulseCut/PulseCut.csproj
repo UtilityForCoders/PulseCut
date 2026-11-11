@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>0.2.0-alpha.4</Version>
+    <Product>PulseCut</Product>
+    <ApplicationIcon>Assets/PulseCut.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets/PulseCut.ico" />
+    <Resource Include="Assets/PulseCutLogo.png" />
+  </ItemGroup>
+</Project>
