@@ -1,19 +1,17 @@
 # Historial de cambios
 
-## 0.1.0 - 2026-10-29
+## 0.2.0 alfa 4
 
 ### Aplicación
 
-- Editor local de video y audio con importación múltiple.
+- Editor de video y audio para Windows x64 en C# y WPF.
 - Recorte mediante tiempos en segundos y controles arrastrables.
 - Cambio de velocidad entre 0,25x y 4x.
 - Exportación a MP4, MP3 y WAV con progreso y cancelación.
-- Aplicación de escritorio para Windows x64 con FFmpeg y FFprobe incluidos.
-- Ejecutable portátil y distribución sin comprimir.
+- Barra de título integrada e icono propio en Windows y en el editor.
+- Instalador con el runtime de .NET, FFmpeg y FFprobe.
 
 ### Verificación y documentación
 
-- Pruebas de importación, recorte, velocidad, formatos y validación de archivos.
-- Prueba funcional de la aplicación empaquetada y del ejecutable portátil.
-- README con instrucciones de ejecución, desarrollo, compilación y límites.
-- Notas de versión, sumas SHA-256 y avisos de componentes de terceros.
+- Prueba de exportaciones a MP4, MP3 y WAV con recorte y cambio de velocidad.
+- Guía de uso y compilación, y avisos de los componentes multimedia.

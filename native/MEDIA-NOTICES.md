@@ -4,4 +4,4 @@ PulseCut invoca FFmpeg y FFprobe como procesos independientes. El script de publ
 
 El instalador incluye FFmpeg y FFprobe 6.1.1 essentials de Gyan. La compilación verifica el SHA-256 de los binarios y conserva su licencia y sus notas en la carpeta `licenses`. [Binarios y avisos de la compilación](https://github.com/eugeneware/ffmpeg-static/releases/tag/b6.1.1) · [Fuentes de FFmpeg 6.1.1](https://github.com/FFmpeg/FFmpeg/commit/e38092ef93).
 
-La opción `-MediaTools` permite compilar con otros binarios locales. La compilación 0.1.0 incluía FFprobe 4.0.2 de ffprobe-static 3.1.0. [Fuentes de FFprobe 4.0.2](https://github.com/FFmpeg/FFmpeg/tree/n4.0.2).
+La opción `-MediaTools` permite compilar con otros binarios locales.
