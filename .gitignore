@@ -1,6 +1,3 @@
-node_modules/
-.pulsecut/
-test-output/
 release/
 artifacts/
 __pycache__/

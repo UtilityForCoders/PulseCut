@@ -17,16 +17,17 @@ def main():
     parser.add_argument('--repo', default='UtilityForCoders/PulseCut')
     parser.add_argument('--tag', required=True)
     parser.add_argument('--target')
-    parser.add_argument('--notes', default='RELEASE_NOTES.md')
+    parser.add_argument('--notes', type=Path)
     parser.add_argument('--check', action='store_true')
     parser.add_argument('assets', nargs='*')
     args = parser.parse_args()
     if not args.check:
-        if not args.target or len(args.assets) != 1:
-            parser.error('--target and exactly one .exe are required to publish')
+        if not args.target or not args.notes or len(args.assets) != 1:
+            parser.error('--target, --notes and exactly one .exe are required to publish')
         executable = Path(args.assets[0])
         if executable.suffix.lower() != '.exe' or not executable.is_file():
             parser.error('the release asset must be an existing .exe file')
+        notes = args.notes.read_text(encoding='utf-8')
     env = dict(os.environ, GIT_TERMINAL_PROMPT='0', GCM_INTERACTIVE='Never')
     result = subprocess.run(['git', 'credential', 'fill'],
         input=f'protocol=https\nhost=github.com\npath={args.repo}.git\n\n',
@@ -79,7 +80,6 @@ def main():
         obj = api('GET', f'/git/tags/{obj["sha"]}')['object']
     if obj['sha'] != args.target:
         raise RuntimeError('The remote tag does not match --target.')
-    notes = Path(args.notes).read_text(encoding='utf-8')
     if not release:
         release = api('POST', '/releases', {'tag_name': args.tag, 'target_commitish': args.target,
             'name': f'PulseCut {args.tag.removeprefix("v")}', 'body': notes,

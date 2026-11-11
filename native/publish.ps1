@@ -1,14 +1,17 @@
 param(
     [string]$DotNet = 'dotnet',
-    [string]$MediaTools = (Join-Path $PSScriptRoot '../release/win-unpacked/resources/bin'),
+    [string]$MediaTools,
     [string]$Output = (Join-Path $PSScriptRoot '../release/PulseCut-Windows-x64')
 )
 
 $ErrorActionPreference = 'Stop'
+if (-not $MediaTools) {
+    $MediaTools = & (Join-Path $PSScriptRoot 'get-media-tools.ps1')
+}
 $mediaPath = (Resolve-Path -LiteralPath $MediaTools).Path
 foreach ($binary in @('ffmpeg.exe', 'ffprobe.exe')) {
     if (-not (Test-Path -LiteralPath (Join-Path $mediaPath $binary) -PathType Leaf)) {
-        throw "Missing $binary in $mediaPath"
+        throw "Falta $binary en $mediaPath."
     }
 }
 
