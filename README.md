@@ -186,12 +186,14 @@ Si falla una exportación, comprueba el formato de origen, el espacio disponible
 
 ## Componentes de terceros
 
-Consulta `THIRD-PARTY-NOTICES.md`. El ejecutable incluye FFmpeg y FFprobe con sus licencias respectivas. La release adjunta `THIRD-PARTY-LICENSES.zip` con licencias, versiones, configuraciones y avisos de los componentes incluidos.
+Consulta `THIRD-PARTY-NOTICES.md`. El ejecutable de Electron incluye FFmpeg y FFprobe con sus licencias respectivas. La release 0.1.0 adjunta `THIRD-PARTY-LICENSES.zip`. El instalador de la edición nativa incorpora sus avisos en la carpeta `licenses`.
 
 ## Publicación
 
-`scripts/github-release.py` publica una release desde un tag ya subido y verifica el SHA-256 de cada archivo adjunto. Requiere Python 3.11 o superior y una cuenta con permisos de escritura configurada en Git Credential Manager. No almacena ni imprime credenciales. Crea primero un borrador, adjunta los archivos y publica la release cuando termina de verificarlos.
+La edición nativa se distribuye en un solo instalador para Windows x64. El workflow de GitHub Actions y los pasos de compilación están en la [guía de la edición nativa](native/README.md#generar-el-instalador).
+
+Para publicar manualmente un ejecutable desde un tag ya subido, `scripts/github-release.py` acepta un único archivo `.exe` y verifica su SHA-256. Requiere Python 3.11 o superior y una cuenta con permisos de escritura configurada en Git Credential Manager. El archivo indicado con `--notes` se utiliza como descripción de la release.
 
 Las notas de la primera versión están en `RELEASE_NOTES.md`. El historial se mantiene en `CHANGELOG.md`.
 
-Después de compilar y verificar los ejecutables, `python scripts/package-release.py` recopila la documentación, los avisos de terceros y las sumas SHA-256 en `release`.
+Para la compilación de Electron, `python scripts/package-release.py` recopila la documentación, los avisos de terceros y el SHA-256 del ejecutable en `release` para revisión local.

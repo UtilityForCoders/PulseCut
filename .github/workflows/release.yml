@@ -1,0 +1,71 @@
+name: Instalador de PulseCut para Windows
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    outputs:
+      filename: ${{ steps.package.outputs.filename }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Probar PulseCut y compilar el instalador
+        id: package
+        shell: pwsh
+        run: |
+          $buildOptions = @{}
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $buildOptions.ExpectedTag = $env:GITHUB_REF_NAME
+          }
+          $installer = & ./native/build-installer.ps1 @buildOptions
+          "filename=$($installer.Name)" >> $env:GITHUB_OUTPUT
+          "path=$($installer.FullName)" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: instalador-windows-x64
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release-${{ github.ref_name }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: instalador-windows-x64
+          path: installer
+
+      - name: Publicar solo el instalador
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INSTALLER: ${{ needs.build.outputs.filename }}
+        run: |
+          options=(--verify-tag --title "PulseCut ${GITHUB_REF_NAME#v}" --generate-notes)
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            options+=(--prerelease --latest=false)
+          fi
+          gh release create "$GITHUB_REF_NAME" "installer/$INSTALLER" --repo "$GITHUB_REPOSITORY" "${options[@]}" \
+            --notes "Descarga y ejecuta $INSTALLER. Incluye PulseCut, el runtime de .NET y las herramientas multimedia."
