@@ -23,6 +23,18 @@ Requiere el SDK de .NET 10 y dos ejecutables Windows x64 de FFmpeg y FFprobe. El
 
 La carpeta de salida contiene el ejecutable y las herramientas que necesita. La carpeta `native` contiene el código de esta edición.
 
+## Generar el instalador
+
+Con .NET 10 e Inno Setup 6.3 o posterior instalados, ejecuta:
+
+```powershell
+.\native\build-installer.ps1
+```
+
+El script descarga las herramientas multimedia, comprueba su SHA-256, prueba las exportaciones y genera `release/installer/PulseCut-<versión>-setup-win-x64.exe`. El instalador incluye PulseCut, el runtime de .NET, FFmpeg, FFprobe y sus avisos de licencia.
+
+El workflow `release.yml` crea una release al recibir un tag `v<versión>` que coincide con la versión del proyecto. Adjunta únicamente el instalador. La ejecución manual compila y guarda el instalador como artefacto de Actions para probarlo.
+
 ## Flujo de ramas
 
 - `main` contiene el código de las versiones publicadas. Cada versión se identifica con su etiqueta.

@@ -82,12 +82,7 @@ with zipfile.ZipFile(release / 'THIRD-PARTY-LICENSES.zip', 'w', zipfile.ZIP_DEFL
                 creationflags=subprocess.CREATE_NO_WINDOW)
             archive.writestr(f'media/{name}-{suffix}.txt', result.stdout + result.stderr)
 
-assets = sorted(file for file in release.iterdir() if file.is_file() and file.name != 'SHA256SUMS.txt'
-    and file.suffix in {'.exe', '.md', '.zip', '.json'})
-lines = []
-for file in assets:
-    with file.open('rb') as stream:
-        digest = hashlib.file_digest(stream, 'sha256').hexdigest()
-    lines.append(f'{digest}  {file.name}')
-(release / 'SHA256SUMS.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
-print(json.dumps({'executable': exe.name, 'assets': [file.name for file in assets], 'checksum_file': 'SHA256SUMS.txt'}))
+with exe.open('rb') as stream:
+    digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+(release / 'SHA256SUMS.txt').write_text(f'{digest}  {exe.name}\n', encoding='utf-8')
+print(json.dumps({'executable': exe.name, 'checksum_file': 'SHA256SUMS.txt'}))

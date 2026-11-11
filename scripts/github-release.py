@@ -15,14 +15,18 @@ import urllib.request
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo', default='UtilityForCoders/PulseCut')
-    parser.add_argument('--tag', default='v0.1.0')
+    parser.add_argument('--tag', required=True)
     parser.add_argument('--target')
     parser.add_argument('--notes', default='RELEASE_NOTES.md')
     parser.add_argument('--check', action='store_true')
     parser.add_argument('assets', nargs='*')
     args = parser.parse_args()
-    if not args.check and (not args.target or not args.assets):
-        parser.error('--target and asset paths are required to publish')
+    if not args.check:
+        if not args.target or len(args.assets) != 1:
+            parser.error('--target and exactly one .exe are required to publish')
+        executable = Path(args.assets[0])
+        if executable.suffix.lower() != '.exe' or not executable.is_file():
+            parser.error('the release asset must be an existing .exe file')
     env = dict(os.environ, GIT_TERMINAL_PROMPT='0', GCM_INTERACTIVE='Never')
     result = subprocess.run(['git', 'credential', 'fill'],
         input=f'protocol=https\nhost=github.com\npath={args.repo}.git\n\n',
@@ -63,8 +67,9 @@ def main():
         return
 
     assets = [Path(name).resolve(strict=True) for name in args.assets]
-    if len({asset.name for asset in assets}) != len(assets):
-        raise RuntimeError('Asset names must be unique.')
+    expected_assets = {asset.name for asset in assets}
+    if release and {asset['name'] for asset in release['assets']} - expected_assets:
+        raise RuntimeError('This release already contains additional assets. Review it before publishing.')
     # Confirm the public tag points to the exact tested source revision.
     ref = api('GET', f'/git/ref/tags/{tag}')
     if not ref:
@@ -119,8 +124,8 @@ def main():
             {'body': notes, 'draft': False, 'make_latest': 'true'})
     verified = api('GET', f'/releases/{release["id"]}')
     uploaded = {asset['name']: asset for asset in verified['assets']}
-    if verified['draft'] or not all(asset.name in uploaded for asset in assets):
-        raise RuntimeError('The published release is missing required assets.')
+    if verified['draft'] or set(uploaded) != expected_assets:
+        raise RuntimeError('The published release must contain exactly the requested executable.')
     print(json.dumps({'published': True, 'url': verified['html_url'], 'tag': verified['tag_name'],
         'assets': [{'name': asset['name'], 'size': asset['size'], 'url': asset['browser_download_url']}
             for asset in verified['assets']]}, indent=2))
