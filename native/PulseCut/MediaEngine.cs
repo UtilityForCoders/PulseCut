@@ -11,13 +11,16 @@ internal sealed record MediaFile(string Path, double Duration, int? VideoIndex, 
         format is "mp3" or "wav" && AudioIndex.HasValue;
 }
 
-internal sealed record Clip(double Start, double End, double Speed, string Format)
+internal sealed record Clip(double Start, double End, double Speed, string Format,
+    string Resolution = "original", string Quality = "balanced")
 {
     public double Duration => (End - Start) / Speed;
 
     public bool IsValid(MediaFile source) =>
         double.IsFinite(Start) && double.IsFinite(End) && Start >= 0 && End > Start &&
-        End <= source.Duration && Speed is >= 0.25 and <= 4 && source.Supports(Format);
+        End <= source.Duration && Speed is >= 0.25 and <= 4 && source.Supports(Format) &&
+        Resolution is "original" or "1080" or "720" or "480" &&
+        Quality is "fast" or "balanced" or "high";
 }
 
 internal static class MediaEngine
@@ -67,10 +70,16 @@ internal static class MediaEngine
         };
         if (clip.Format == "mp4")
         {
+            var (preset, crf) = clip.Quality switch
+            {
+                "fast" => ("veryfast", "24"),
+                "high" => ("slow", "19"),
+                _ => ("medium", "22")
+            };
             args.AddRange([
                 "-map", $"0:{source.VideoIndex}",
-                "-vf", $"setpts=(PTS-STARTPTS)/{Number(clip.Speed)},scale=max(2\\,trunc(iw/2)*2):max(2\\,trunc(ih/2)*2)",
-                "-c:v", "libx264", "-preset", "veryfast", "-crf", "22", "-pix_fmt", "yuv420p",
+                "-vf", $"setpts=(PTS-STARTPTS)/{Number(clip.Speed)},{ScaleFilter(clip.Resolution)}",
+                "-c:v", "libx264", "-preset", preset, "-crf", crf, "-pix_fmt", "yuv420p",
                 "-movflags", "+faststart"
             ]);
         }
@@ -121,6 +130,14 @@ internal static class MediaEngine
     }
 
     private static string Number(double value) => value.ToString("0.#########", CultureInfo.InvariantCulture);
+
+    private static string ScaleFilter(string resolution)
+    {
+        var limit = resolution switch { "1080" => 1080, "720" => 720, "480" => 480, _ => 0 };
+        return limit == 0
+            ? "scale=max(2\\,trunc(iw/2)*2):max(2\\,trunc(ih/2)*2)"
+            : $"scale=-2:min({limit}\\,ih)";
+    }
 
     private static async Task<string> RunAsync(string tool, IEnumerable<string> args,
         Action<string>? onLine, CancellationToken cancellationToken)
