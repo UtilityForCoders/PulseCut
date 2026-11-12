@@ -31,7 +31,21 @@ $notices = New-Item -ItemType Directory -Force -Path (Join-Path $Output 'license
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'MEDIA-NOTICES.md') -Destination $notices.FullName
 foreach ($binary in @('ffmpeg.exe', 'ffprobe.exe')) {
     $tool = Join-Path $destination.FullName $binary
-    & $tool -L 2>&1 | Out-File (Join-Path $notices.FullName "$binary-license.txt") -Encoding utf8
+    $licenseProcess = [System.Diagnostics.Process]::new()
+    $licenseProcess.StartInfo = [System.Diagnostics.ProcessStartInfo]::new($tool)
+    $licenseProcess.StartInfo.UseShellExecute = $false
+    $licenseProcess.StartInfo.CreateNoWindow = $true
+    $licenseProcess.StartInfo.RedirectStandardOutput = $true
+    $licenseProcess.StartInfo.RedirectStandardError = $true
+    $licenseProcess.StartInfo.Arguments = '-L'
+    if (-not $licenseProcess.Start()) { throw "No se pudo consultar la licencia de $binary." }
+    $licenseOutput = $licenseProcess.StandardOutput.ReadToEndAsync()
+    $licenseError = $licenseProcess.StandardError.ReadToEndAsync()
+    $licenseProcess.WaitForExit()
+    ($licenseOutput.Result + $licenseError.Result) |
+        Out-File (Join-Path $notices.FullName "$binary-license.txt") -Encoding utf8
+    if ($licenseProcess.ExitCode -ne 0) { throw "$binary no pudo mostrar su licencia." }
+    $licenseProcess.Dispose()
 }
 $packagedNotices = Join-Path $mediaPath '../licenses'
 foreach ($name in @('FFmpeg-LICENSE.txt', 'FFmpeg-README.txt')) {

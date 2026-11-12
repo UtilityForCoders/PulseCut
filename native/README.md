@@ -6,12 +6,27 @@ Aplicación de escritorio para Windows x64, hecha en C# y WPF. Abre `PulseCut.ex
 
 1. Abre o arrastra un archivo de video o audio.
 2. Arrastra los extremos del tramo en la línea de tiempo o escribe el inicio y el fin en segundos. También puedes usar la posición actual de reproducción. Con un extremo enfocado, las flechas ajustan 0,1 s y Mayús más flecha ajusta 1 s.
-3. Elige la velocidad de salida y el formato. El panel muestra el códec y la duración del resultado. MP4 requiere video. MP3 y WAV requieren una pista de audio.
+3. Elige la velocidad de salida, el formato y, para video, la resolución y calidad. El panel muestra el códec y la duración del resultado. MP4 requiere video. MP3 y WAV requieren una pista de audio.
 4. Pulsa **Exportar clip** y elige el archivo de destino. Puedes cancelar la exportación en curso.
 
 La vista previa usa el reproductor de Windows a velocidad original. Su compatibilidad depende de los códecs disponibles en el equipo. Si Windows no puede reproducir un archivo que FFmpeg sí admite, puedes definir el recorte por tiempo y exportarlo. La aplicación edita un archivo a la vez.
 
 La barra superior permite abrir archivos, minimizar, maximizar, restaurar y cerrar la ventana. Arrastra un espacio libre de la barra para moverla. Haz doble clic ahí para alternar entre el tamaño normal y maximizado.
+
+## Atajos
+
+| Atajo | Acción |
+| --- | --- |
+| `Ctrl+O` | Abrir un archivo. |
+| `Espacio` | Reproducir o pausar. |
+| `I` / `O` | Marcar el inicio o el fin. |
+| `Ctrl+Z` / `Ctrl+Y` | Deshacer o rehacer cambios de edición. |
+| `Supr` | Restablecer el intervalo completo. |
+| `Ctrl+E` | Exportar el clip. |
+| `←` / `→` | Retroceder o avanzar un segundo. |
+| `Ctrl` + rueda | Ajustar el zoom de la línea de tiempo. |
+
+Los atajos de edición se suspenden mientras se escribe en un campo. La línea de tiempo representa un único archivo y un único intervalo: no elimina segmentos internos, no crea múltiples pistas y no genera miniaturas ni formas de onda. Esto mantiene la interfaz y el consumo de recursos reducidos.
 
 ## Compilar
 

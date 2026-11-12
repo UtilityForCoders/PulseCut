@@ -21,7 +21,9 @@ public partial class App : Application
                 foreach (var (format, speed) in new[] { ("mp4", 2d), ("mp3", 4d), ("wav", 0.25d) })
                 {
                     var path = Path.Combine(outputDirectory, $"clip.{format}");
-                    var clip = new Clip(1, 3, speed, format);
+                    var clip = format == "mp4"
+                        ? new Clip(1, 3, speed, format, "720", "high")
+                        : new Clip(1, 3, speed, format);
                     await MediaEngine.ExportAsync(source, clip, path, null, CancellationToken.None);
                     var exported = await MediaEngine.ProbeAsync(path, CancellationToken.None);
                     if (Math.Abs(exported.Duration - clip.Duration) > 0.15 ||
