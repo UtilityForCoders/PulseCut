@@ -52,6 +52,52 @@ internal static class MediaEngine
         return new MediaFile(path, duration, video, audio);
     }
 
+    public static async Task<IReadOnlyList<byte[]>> RenderFilmstripAsync(MediaFile source, int frames,
+        CancellationToken cancellationToken)
+    {
+        if (!source.VideoIndex.HasValue || frames <= 0)
+            return Array.Empty<byte[]>();
+        var captured = new byte[]?[frames];
+        using var gate = new SemaphoreSlim(3);
+        var tasks = Enumerable.Range(0, frames).Select(async index =>
+        {
+            await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var position = source.Duration * (index + 0.5) / frames;
+                captured[index] = await RenderFrameAsync(source, position, cancellationToken).ConfigureAwait(false);
+            }
+            catch (InvalidDataException) { captured[index] = null; }
+            finally { gate.Release(); }
+        });
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+        return captured.OfType<byte[]>().ToArray();
+    }
+
+    private static async Task<byte[]?> RenderFrameAsync(MediaFile source, double position,
+        CancellationToken cancellationToken)
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"pulsecut-frame-{Guid.NewGuid():N}.png");
+        try
+        {
+            await RunAsync("ffmpeg", [
+                "-hide_banner", "-loglevel", "error", "-nostdin", "-n", "-protocol_whitelist", "file",
+                "-ss", Number(position), "-i", source.Path, "-map", $"0:{source.VideoIndex}",
+                "-frames:v", "1", "-vf", "scale=-2:144", file
+            ], null, cancellationToken).ConfigureAwait(false);
+            if (!File.Exists(file))
+                return null;
+            var data = await File.ReadAllBytesAsync(file, cancellationToken).ConfigureAwait(false);
+            return data.Length > 0 ? data : null;
+        }
+        finally
+        {
+            try { File.Delete(file); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
+
     public static async Task ExportAsync(MediaFile source, Clip clip, string destination,
         IProgress<double>? progress, CancellationToken cancellationToken)
     {

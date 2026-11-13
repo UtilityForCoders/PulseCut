@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
@@ -15,6 +16,7 @@ namespace PulseCut;
 public partial class MainWindow : Window
 {
     private const double TimelineInset = 16;
+    private const int FilmstripFrames = 8;
     private readonly DispatcherTimer playbackTimer;
     private readonly Stack<EditorState> undoHistory = new();
     private readonly Stack<EditorState> redoHistory = new();
@@ -98,8 +100,6 @@ public partial class MainWindow : Window
             source = media;
             applyingState = true;
             FileTitle.Text = Path.GetFileName(media.Path);
-            TimelineFileName.Text = Path.GetFileName(media.Path);
-            TimelineMediaIcon.Text = media.VideoIndex.HasValue ? "\uE714" : "\uE8D6";
             StartBox.Text = "0";
             EndBox.Text = DisplayNumber(media.Duration);
             FormatBox.ItemsSource = new[] { "mp4", "mp3", "wav" }
@@ -113,7 +113,6 @@ public partial class MainWindow : Window
             UpdateTimelineTicks();
             ShowPosition(0);
             ShowPreviewMessage("Preparando vista previa…", "También puedes editar usando los tiempos exactos.", false);
-            StatusLabel.Text = "Archivo listo para editar";
             Preview.Source = new Uri(media.Path);
             Preview.Volume = VolumeSlider.Value;
             Preview.Play();
@@ -123,6 +122,9 @@ public partial class MainWindow : Window
             lastState = ReadEditorState();
             UpdateHistoryButtons();
             UpdateSettings();
+            StatusLabel.Text = "Preparando la cinta de vista previa…";
+            await LoadTimelinePreviewAsync(media, operation!.Token);
+            StatusLabel.Text = "Archivo listo para editar";
         }
         catch (OperationCanceledException) { StatusLabel.Text = "Importación cancelada"; }
         catch (Exception error) { ShowError("No se pudo abrir el archivo", error); }
@@ -131,6 +133,75 @@ public partial class MainWindow : Window
             applyingState = false;
             EndOperation();
         }
+    }
+
+    private async Task LoadTimelinePreviewAsync(MediaFile media, CancellationToken cancellationToken)
+    {
+        ResetTimelinePreview();
+        if (!media.VideoIndex.HasValue)
+        {
+            TimelineMediaIcon.HorizontalAlignment = HorizontalAlignment.Center;
+            TimelineMediaIcon.Text = "\uE8D6";
+            TimelineFileName.Visibility = Visibility.Collapsed;
+            TimelineTrack.ToolTip = Path.GetFileName(media.Path);
+            return;
+        }
+
+        IReadOnlyList<byte[]> frames;
+        try { frames = await MediaEngine.RenderFilmstripAsync(media, FilmstripFrames, cancellationToken); }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception) { frames = Array.Empty<byte[]>(); }
+        if (frames.Count == 0)
+        {
+            TimelineMediaIcon.HorizontalAlignment = HorizontalAlignment.Center;
+            TimelineFileName.Text = Path.GetFileName(media.Path);
+            TimelineTrack.ToolTip = Path.GetFileName(media.Path);
+            return;
+        }
+
+        TimelineMediaIcon.Visibility = Visibility.Collapsed;
+        TimelineFileName.Visibility = Visibility.Collapsed;
+        TimelineFilmstrip.Columns = frames.Count;
+        foreach (var bytes in frames)
+        {
+            var image = new Image
+            {
+                Source = CreateFrame(bytes),
+                Stretch = Stretch.UniformToFill,
+                ClipToBounds = true,
+                SnapsToDevicePixels = true
+            };
+            RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.HighQuality);
+            TimelineFilmstrip.Children.Add(image);
+        }
+        TimelineFilmstrip.Visibility = Visibility.Visible;
+        TimelineFilmstripShade.Visibility = Visibility.Visible;
+        TimelineTrack.ToolTip = Path.GetFileName(media.Path);
+    }
+
+    private void ResetTimelinePreview()
+    {
+        TimelineFilmstrip.Children.Clear();
+        TimelineFilmstrip.Visibility = Visibility.Collapsed;
+        TimelineFilmstripShade.Visibility = Visibility.Collapsed;
+        TimelineMediaIcon.Visibility = Visibility.Visible;
+        TimelineMediaIcon.HorizontalAlignment = HorizontalAlignment.Left;
+        TimelineMediaIcon.Text = "\uE714";
+        TimelineFileName.Text = "Abre un archivo para comenzar";
+        TimelineFileName.Visibility = Visibility.Visible;
+        TimelineTrack.ToolTip = null;
+    }
+
+    private static BitmapImage CreateFrame(byte[] data)
+    {
+        var image = new BitmapImage();
+        using var stream = new MemoryStream(data);
+        image.BeginInit();
+        image.CacheOption = BitmapCacheOption.OnLoad;
+        image.StreamSource = stream;
+        image.EndInit();
+        image.Freeze();
+        return image;
     }
 
     private void OnMediaOpened(object sender, RoutedEventArgs e)
