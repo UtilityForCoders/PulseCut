@@ -26,7 +26,7 @@ La barra superior permite abrir archivos, minimizar, maximizar, restaurar y cerr
 | `←` / `→` | Retroceder o avanzar un segundo. |
 | `Ctrl` + rueda | Ajustar el zoom de la línea de tiempo. |
 
-Los atajos de edición se suspenden mientras se escribe en un campo. La línea de tiempo representa un único archivo y un único intervalo: no elimina segmentos internos, no crea múltiples pistas y no genera miniaturas ni formas de onda. Esto mantiene la interfaz y el consumo de recursos reducidos.
+Los atajos de edición se suspenden mientras se escribe en un campo. La línea de tiempo representa un único archivo y un único intervalo: no elimina segmentos internos, no crea múltiples pistas y no genera formas de onda. La cinta de recorrido muestra una tira de fotogramas como vista previa del video; si el archivo es solo de audio, muestra su icono. Esto mantiene la interfaz y el consumo de recursos reducidos.
 
 ## Compilar
 

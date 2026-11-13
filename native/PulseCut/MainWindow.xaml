@@ -294,8 +294,20 @@
                                 <TextBlock x:Name="TickEnd" Grid.Column="3" Style="{StaticResource TimelineTick}" HorizontalAlignment="Right"/>
                             </Grid>
                             <Grid Grid.Row="1">
-                                <Border Margin="16,2" CornerRadius="7" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1">
+                                <Border x:Name="TimelineTrack" Margin="16,2" CornerRadius="7" Background="{StaticResource Panel}"
+                                        BorderBrush="{StaticResource Line}" BorderThickness="1" ClipToBounds="True">
                                     <Grid>
+                                        <UniformGrid x:Name="TimelineFilmstrip" Rows="1" Visibility="Collapsed"/>
+                                        <Border x:Name="TimelineFilmstripShade" Visibility="Collapsed" IsHitTestVisible="False">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                    <GradientStop Color="#59101218" Offset="0"/>
+                                                    <GradientStop Color="#00101218" Offset="0.22"/>
+                                                    <GradientStop Color="#00101218" Offset="0.78"/>
+                                                    <GradientStop Color="#59101218" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
                                         <TextBlock x:Name="TimelineMediaIcon" Text="&#xE714;" FontFamily="Segoe MDL2 Assets"
                                                    Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="14,0"/>
                                         <TextBlock x:Name="TimelineFileName" Text="Abre un archivo para comenzar" Foreground="{StaticResource Muted}"
